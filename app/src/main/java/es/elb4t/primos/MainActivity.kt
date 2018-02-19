@@ -9,11 +9,17 @@ import android.widget.Button
 import android.widget.EditText
 
 
+
+
 class MainActivity : AppCompatActivity() {
+    companion object {
+        private val TAG = MainActivity::class.java.name
+    }
     private var inputField: EditText? = null
-    private var resultField: EditText? = null
-    private var primecheckbutton: Button? = null
+    private lateinit var resultField: EditText
+    private lateinit var primecheckbutton: Button
     private var mAsyncTask: MyAsyncTask? = null
+    private var isRunning: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,15 +30,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun triggerPrimecheck(v: View) {
-        Log.v(TAG, "Thread " + Thread.currentThread().id + ": triggerPrimecheck() starts")
-        val parameter = java.lang.Long.parseLong(inputField!!.text.toString())
-        mAsyncTask = MyAsyncTask()
-        mAsyncTask!!.execute(parameter)
-        Log.v(TAG, "Thread " + Thread.currentThread().id + ": triggerPrimecheck() ends")
+        if (!isRunning) {
+            isRunning = true
+            Log.v(TAG, "Thread " + Thread.currentThread().id + ": triggerPrimecheck() comienza")
+            val parameter = java.lang.Long.parseLong(inputField!!.text.toString())
+            mAsyncTask = MyAsyncTask()
+            mAsyncTask!!.execute(parameter)
+            Log.v(TAG, "Thread " + Thread.currentThread().id + ": triggerPrimecheck() termina")
+        } else {
+            isRunning = false;
+            Log.v(TAG, "Cancelando test " + Thread.currentThread().id)
+            mAsyncTask!!.cancel(true)
+        }
     }
 
     private inner class MyAsyncTask : AsyncTask<Long, Double, Boolean>() {
-         override fun doInBackground(vararg n: Long?): Boolean? {
+        override fun doInBackground(vararg n: Long?): Boolean? {
             Log.v(TAG, "Thread " + Thread.currentThread().id + ": doInBackground() starts")
             val numComprobar = n[0]
             if (numComprobar!! < 2 || numComprobar % 2 == 0L)
@@ -40,7 +53,7 @@ class MainActivity : AppCompatActivity() {
             val limit = Math.sqrt(numComprobar.toDouble()) + 0.0001
             var progress = 0.0
             var factor: Long = 3
-            while (factor < limit) {
+            while (factor < limit && !isCancelled) {
                 if (numComprobar % factor == 0L)
                     return false
 
@@ -57,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         override fun onPreExecute() {
             Log.v(TAG, "Thread " + Thread.currentThread().id + ": onPreExecute()")
             resultField!!.setText("")
-            primecheckbutton!!.isEnabled = false
+            primecheckbutton!!.text = "CANCELAR"
         }
 
         override fun onProgressUpdate(vararg progress: Double?) {
@@ -68,11 +81,17 @@ class MainActivity : AppCompatActivity() {
         override fun onPostExecute(isPrime: Boolean?) {
             Log.v(TAG, "Thread " + Thread.currentThread().id + ": onPostExecute()")
             resultField!!.setText(isPrime!!.toString())
-            primecheckbutton!!.isEnabled = true
+            primecheckbutton.text = "¿ES PRIMO?"
+            isRunning=false
+        }
+
+        override fun onCancelled() {
+            Log.v(TAG, "Thread " + Thread.currentThread().id + ": onCancelled")
+            super.onCancelled()
+            resultField.setText("Proceso cancelado")
+            primecheckbutton.text = "¿ES PRIMO?"
         }
     }
 
-    companion object {
-        private val TAG = MainActivity::class.java.name
-    }
+
 }
