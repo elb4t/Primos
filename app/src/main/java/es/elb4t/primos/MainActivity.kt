@@ -44,6 +44,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        if (mAsyncTask != null && mAsyncTask!!.status == AsyncTask.Status.RUNNING) {
+            mAsyncTask!!.cancel(true)
+        }
+    }
+
     private inner class MyAsyncTask : AsyncTask<Long, Double, Boolean>() {
         override fun doInBackground(vararg n: Long?): Boolean? {
             Log.v(TAG, "Thread " + Thread.currentThread().id + ": doInBackground() starts")
