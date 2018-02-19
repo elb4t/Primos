@@ -19,7 +19,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var resultField: EditText
     private lateinit var primecheckbutton: Button
     private var mAsyncTask: MyAsyncTask? = null
-    private var isRunning: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,15 +29,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun triggerPrimecheck(v: View) {
-        if (!isRunning) {
-            isRunning = true
+        if (mAsyncTask!!.status == AsyncTask.Status.RUNNING) {
             Log.v(TAG, "Thread " + Thread.currentThread().id + ": triggerPrimecheck() comienza")
             val parameter = java.lang.Long.parseLong(inputField!!.text.toString())
             mAsyncTask = MyAsyncTask()
             mAsyncTask!!.execute(parameter)
             Log.v(TAG, "Thread " + Thread.currentThread().id + ": triggerPrimecheck() termina")
         } else {
-            isRunning = false;
             Log.v(TAG, "Cancelando test " + Thread.currentThread().id)
             mAsyncTask!!.cancel(true)
         }
@@ -89,7 +86,6 @@ class MainActivity : AppCompatActivity() {
             Log.v(TAG, "Thread " + Thread.currentThread().id + ": onPostExecute()")
             resultField!!.setText(isPrime!!.toString())
             primecheckbutton.text = "¿ES PRIMO?"
-            isRunning=false
         }
 
         override fun onCancelled() {
